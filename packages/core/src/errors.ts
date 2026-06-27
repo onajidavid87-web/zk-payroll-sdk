@@ -1,25 +1,3 @@
-export class PayrollError extends Error {
-  constructor(
-    message: string,
-    public code: number
-  ) {
-    super(message);
-    this.name = "PayrollError";
-  }
-}
-
-// Error codes for Soroban RPC failures
-export const ContractErrorCode = {
-  SIMULATION_FAILED: 1001,
-  TRANSACTION_SUBMISSION_FAILED: 1002,
-  TRANSACTION_TIMEOUT: 1003,
-  INSUFFICIENT_FEE: 1004,
-  CONTRACT_REVERT: 1005,
-  UNKNOWN_RPC_ERROR: 1099,
-} as const;
-
-export type ContractErrorCode = (typeof ContractErrorCode)[keyof typeof ContractErrorCode];
-
 // Error codes for PayrollService validation/orchestration failures
 export const PayrollServiceErrorCode = {
   PROOF_GENERATION_FAILED: 2001,

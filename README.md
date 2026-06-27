@@ -78,6 +78,46 @@ const txHash = await mockContract.deposit(1000n);
 
 See the [Testing Guide](docs/TESTING.md) for complete documentation.
 
+## Examples
+
+Runnable examples covering two core use cases are in the [`examples/`](./examples/) directory.
+Each example works out of the box in demo mode (no Stellar node required) and switches to a
+live network automatically when the relevant environment variables are set.
+
+### Employee Onboarding
+
+[`examples/employee-onboarding.ts`](./examples/employee-onboarding.ts)
+
+Shows how to onboard a new employee: verify they have no existing payroll account, fund it
+with an initial allocation, and confirm the deposit was recorded.
+
+```bash
+npx tsx examples/employee-onboarding.ts
+```
+
+### Payroll Execution
+
+[`examples/payroll-execution.ts`](./examples/payroll-execution.ts)
+
+Shows how to run a full private payroll batch: configure `SnarkjsProofGenerator` with circuit
+artifacts and caching, wire up `PayrollService`, process multiple payments, and report results.
+
+```bash
+npx tsx examples/payroll-execution.ts
+```
+
+### Configuration
+
+Copy the environment variable template and fill in your values to run against a live network:
+
+```bash
+cp examples/.env.example examples/.env
+# edit examples/.env
+source examples/.env && npx tsx examples/payroll-execution.ts
+```
+
+See [`examples/.env.example`](./examples/.env.example) for all available variables.
+
 ## Documentation
 
 - [API Reference](./docs/API.md) - Complete API documentation

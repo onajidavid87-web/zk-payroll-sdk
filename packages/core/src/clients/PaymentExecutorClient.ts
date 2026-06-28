@@ -147,14 +147,19 @@ export class PaymentExecutorClient extends BaseContractWrapper {
   }
 
   private scValToBigInt(scVal: xdr.ScVal): bigint {
-    const i128 = scVal.i128();
-    if (i128) {
-      const hi = BigInt(i128.hi());
-      const lo = BigInt(i128.lo());
+    const arm = (scVal as any).arm();
+    if (arm === "i128") {
+      const i128 = scVal.i128();
+      const hi = BigInt(i128.hi().toString());
+      const lo = BigInt(i128.lo().toString());
       return (hi << 64n) | lo;
     }
-    const u64 = scVal.u64();
-    if (u64) return BigInt(u64);
+    if (arm === "u64") {
+      return BigInt(scVal.u64().toString());
+    }
+    if (arm === "u32") {
+      return BigInt(scVal.u32().toString());
+    }
     return 0n;
   }
 }

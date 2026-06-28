@@ -34,12 +34,15 @@ function makeRegistryEntryScVal(overrides?: Partial<Record<string, xdr.ScVal>>):
   };
   const merged = { ...defaults, ...overrides };
   return xdr.ScVal.scvMap(
-    Object.entries(merged).map(([key, val]) =>
-      new xdr.ScMapEntry({
+    Object.entries(merged).map(([key, val]) => {
+      if (val === undefined) {
+        throw new Error(`Value for key ${key} is undefined`);
+      }
+      return new xdr.ScMapEntry({
         key: nativeToScVal(key, { type: "symbol" }),
         val,
-      })
-    )
+      });
+    })
   );
 }
 
@@ -55,12 +58,15 @@ function makeCommitmentEntryScVal(overrides?: Partial<Record<string, xdr.ScVal>>
   };
   const merged = { ...defaults, ...overrides };
   return xdr.ScVal.scvMap(
-    Object.entries(merged).map(([key, val]) =>
-      new xdr.ScMapEntry({
+    Object.entries(merged).map(([key, val]) => {
+      if (val === undefined) {
+        throw new Error(`Value for key ${key} is undefined`);
+      }
+      return new xdr.ScMapEntry({
         key: nativeToScVal(key, { type: "symbol" }),
         val,
-      })
-    )
+      });
+    })
   );
 }
 
@@ -79,12 +85,15 @@ function makeScheduledPaymentScVal(overrides?: Partial<Record<string, xdr.ScVal>
   };
   const merged = { ...defaults, ...overrides };
   return xdr.ScVal.scvMap(
-    Object.entries(merged).map(([key, val]) =>
-      new xdr.ScMapEntry({
+    Object.entries(merged).map(([key, val]) => {
+      if (val === undefined) {
+        throw new Error(`Value for key ${key} is undefined`);
+      }
+      return new xdr.ScMapEntry({
         key: nativeToScVal(key, { type: "symbol" }),
         val,
-      })
-    )
+      });
+    })
   );
 }
 

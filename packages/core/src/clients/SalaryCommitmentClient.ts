@@ -25,10 +25,13 @@ export class SalaryCommitmentClient extends BaseContractWrapper {
     signer: Keypair,
     network?: string
   ): Promise<void> {
+    const hashBuf = typeof request.commitmentHash === "string"
+      ? (/^[0-9a-fA-F]+$/.test(request.commitmentHash) && request.commitmentHash.length % 2 === 0 ? Buffer.from(request.commitmentHash, "hex") : Buffer.from(request.commitmentHash, "utf-8"))
+      : request.commitmentHash;
     const args: xdr.ScVal[] = [
       new Address(request.employer).toScVal(),
       new Address(request.employee).toScVal(),
-      nativeToScVal(request.commitmentHash, { type: "bytes" }),
+      nativeToScVal(hashBuf, { type: "bytes" }),
       nativeToScVal(request.cycleId, { type: "u64" }),
     ];
 
@@ -59,22 +62,25 @@ export class SalaryCommitmentClient extends BaseContractWrapper {
     network?: string
   ): Promise<void> {
     const commitVec = xdr.ScVal.scvVec(
-      commitments.map((item) =>
-        xdr.ScVal.scvMap([
+      commitments.map((item) => {
+        const hashBuf = typeof item.commitmentHash === "string"
+          ? (/^[0-9a-fA-F]+$/.test(item.commitmentHash) && item.commitmentHash.length % 2 === 0 ? Buffer.from(item.commitmentHash, "hex") : Buffer.from(item.commitmentHash, "utf-8"))
+          : item.commitmentHash;
+        return xdr.ScVal.scvMap([
           new xdr.ScMapEntry({
             key: nativeToScVal("employee", { type: "symbol" }),
             val: new Address(item.employee).toScVal(),
           }),
           new xdr.ScMapEntry({
             key: nativeToScVal("commitment_hash", { type: "symbol" }),
-            val: nativeToScVal(item.commitmentHash, { type: "bytes" }),
+            val: nativeToScVal(hashBuf, { type: "bytes" }),
           }),
           new xdr.ScMapEntry({
             key: nativeToScVal("cycle_id", { type: "symbol" }),
             val: nativeToScVal(item.cycleId, { type: "u64" }),
           }),
-        ])
-      )
+        ]);
+      })
     );
 
     const args: xdr.ScVal[] = [
@@ -203,14 +209,19 @@ export class SalaryCommitmentClient extends BaseContractWrapper {
   }
 
   private scValToBigInt(scVal: xdr.ScVal): bigint {
-    const i128 = scVal.i128();
-    if (i128) {
-      const hi = BigInt(i128.hi());
-      const lo = BigInt(i128.lo());
+    const arm = (scVal as any).arm();
+    if (arm === "i128") {
+      const i128 = scVal.i128();
+      const hi = BigInt(i128.hi().toString());
+      const lo = BigInt(i128.lo().toString());
       return (hi << 64n) | lo;
     }
-    const u64 = scVal.u64();
-    if (u64) return BigInt(u64);
+    if (arm === "u64") {
+      return BigInt(scVal.u64().toString());
+    }
+    if (arm === "u32") {
+      return BigInt(scVal.u32().toString());
+    }
     return 0n;
   }
 }

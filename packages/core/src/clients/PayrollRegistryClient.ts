@@ -146,14 +146,17 @@ export class PayrollRegistryClient extends BaseContractWrapper {
   }
 
   private scValToBigInt(scVal: xdr.ScVal): bigint {
-    const i128 = scVal.i128();
-    if (i128) {
-      const hi = BigInt(i128.hi());
-      const lo = BigInt(i128.lo());
+    const swName = scVal.switch().name;
+    if (swName === "scvI128") {
+      const i128 = scVal.i128();
+      const hi = BigInt(i128.hi().toString());
+      const lo = BigInt(i128.lo().toString());
       return (hi << 64n) | lo;
     }
-    const u64 = scVal.u64();
-    if (u64) return BigInt(u64);
+    if (swName === "scvU64") {
+      const u64 = scVal.u64();
+      return BigInt(u64.toString());
+    }
     return 0n;
   }
 }

@@ -117,7 +117,7 @@ describe("PayrollService", () => {
       await expect(
         service.processPayment({ recipient: "", amount: 100n, asset: "native" })
       ).rejects.toMatchObject({
-        code: String(PayrollServiceErrorCode.INVALID_RECIPIENT),
+        code: PayrollServiceErrorCode.INVALID_RECIPIENT,
       });
     });
 
@@ -132,7 +132,7 @@ describe("PayrollService", () => {
           asset: "native",
         })
       ).rejects.toMatchObject({
-        code: String(PayrollServiceErrorCode.INVALID_AMOUNT),
+        code: PayrollServiceErrorCode.INVALID_AMOUNT,
       });
     });
 
@@ -147,7 +147,7 @@ describe("PayrollService", () => {
           asset: "native",
         })
       ).rejects.toMatchObject({
-        code: String(PayrollServiceErrorCode.INVALID_AMOUNT),
+        code: PayrollServiceErrorCode.INVALID_AMOUNT,
       });
     });
 
@@ -162,7 +162,7 @@ describe("PayrollService", () => {
           asset: "",
         })
       ).rejects.toMatchObject({
-        code: String(PayrollServiceErrorCode.INVALID_ASSET),
+        code: PayrollServiceErrorCode.INVALID_ASSET,
       });
     });
 
@@ -180,7 +180,7 @@ describe("PayrollService", () => {
           asset: "native",
         })
       ).rejects.toMatchObject({
-        code: String(PayrollServiceErrorCode.PROOF_GENERATION_FAILED),
+        code: PayrollServiceErrorCode.PROOF_GENERATION_FAILED,
         message: expect.stringContaining("circuit mismatch"),
       });
     });

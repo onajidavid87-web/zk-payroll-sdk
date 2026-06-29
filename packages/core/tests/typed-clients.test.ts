@@ -37,7 +37,7 @@ function makeRegistryEntryScVal(overrides?: Partial<Record<string, xdr.ScVal>>):
     Object.entries(merged).map(([key, val]) =>
       new xdr.ScMapEntry({
         key: nativeToScVal(key, { type: "symbol" }),
-        val,
+        val: val!,
       })
     )
   );
@@ -58,7 +58,7 @@ function makeCommitmentEntryScVal(overrides?: Partial<Record<string, xdr.ScVal>>
     Object.entries(merged).map(([key, val]) =>
       new xdr.ScMapEntry({
         key: nativeToScVal(key, { type: "symbol" }),
-        val,
+        val: val!,
       })
     )
   );
@@ -82,7 +82,7 @@ function makeScheduledPaymentScVal(overrides?: Partial<Record<string, xdr.ScVal>
     Object.entries(merged).map(([key, val]) =>
       new xdr.ScMapEntry({
         key: nativeToScVal(key, { type: "symbol" }),
-        val,
+        val: val!,
       })
     )
   );

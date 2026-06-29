@@ -67,6 +67,7 @@ graph TD
 
 ## Further Reading
 
+- [Backend Worker Quickstart](./BACKEND_WORKER_QUICKSTART.md) — practical starter guide for internal automation workers
 - [ZK Proof Generation](./ZK_PROOF_GENERATION.md) — how proofs are constructed
 - [API Reference](./API.md) — full SDK API
 - [ZK Architecture](./zk-architecture.md) — circuit and contract design

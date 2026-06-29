@@ -62,6 +62,10 @@ const proof = await generator.generateProof(witness);
 
 See [ZK Proof Generation Guide](./docs/ZK_PROOF_GENERATION.md) for detailed documentation.
 
+## Backend Worker Quickstart
+
+Teams building internal payroll automation workers can follow the [Backend Worker Quickstart](./docs/BACKEND_WORKER_QUICKSTART.md) for a practical end-to-end prototype covering setup, polling, retries, and event handling.
+
 ## Testing
 
 The SDK includes a powerful mock testing environment for writing unit tests:

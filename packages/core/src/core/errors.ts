@@ -1,10 +1,24 @@
+/**
+ * Context metadata attached to SDK errors for debugging.
+ */
 export interface ErrorContext {
+  /** Transaction hash related to the error */
   transactionId?: string;
+  /** Contract ID involved */
   contractId?: string;
+  /** Network (testnet/mainnet) */
   network?: string;
+  /** Arbitrary additional context */
   [key: string]: unknown;
 }
 
+// ── Base Error ──────────────────────────────────────────────────────────────
+
+/**
+ * Base error class for the ZK Payroll SDK.
+ * All SDK errors extend this class, allowing consumers to catch
+ * any SDK error with a single `instanceof ZkPayrollError` check.
+ */
 export class ZkPayrollError extends Error {
   constructor(
     message: string,
@@ -16,6 +30,11 @@ export class ZkPayrollError extends Error {
   }
 }
 
+// ── Network Errors ──────────────────────────────────────────────────────────
+
+/**
+ * Thrown when a network request fails (RPC calls, artifact downloads, etc.).
+ */
 export class NetworkError extends ZkPayrollError {
   constructor(
     message: string,
@@ -27,6 +46,11 @@ export class NetworkError extends ZkPayrollError {
   }
 }
 
+// ── Proof Generation Errors ─────────────────────────────────────────────────
+
+/**
+ * Thrown when ZK proof generation fails (circuit errors, artifact issues, etc.).
+ */
 export class ProofGenerationError extends ZkPayrollError {
   constructor(
     message: string,
@@ -37,6 +61,9 @@ export class ProofGenerationError extends ZkPayrollError {
   }
 }
 
+// ── Contract Execution Errors ───────────────────────────────────────────────
+
+/** Error codes for Soroban RPC / contract failures */
 export const ContractErrorCode = {
   SIMULATION_FAILED: "SIMULATION_FAILED",
   TRANSACTION_SUBMISSION_FAILED: "TRANSACTION_SUBMISSION_FAILED",
@@ -48,6 +75,10 @@ export const ContractErrorCode = {
 
 export type ContractErrorCodeType = (typeof ContractErrorCode)[keyof typeof ContractErrorCode];
 
+/**
+ * Thrown when a Soroban contract call fails (simulation, submission,
+ * timeout, or on-chain revert).
+ */
 export class ContractExecutionError extends ZkPayrollError {
   constructor(
     message: string,
@@ -58,6 +89,11 @@ export class ContractExecutionError extends ZkPayrollError {
   }
 }
 
+// ── Validation Errors ───────────────────────────────────────────────────────
+
+/**
+ * Thrown when input validation fails (invalid addresses, amounts, etc.).
+ */
 export class ValidationError extends ZkPayrollError {
   constructor(
     message: string,
@@ -69,10 +105,13 @@ export class ValidationError extends ZkPayrollError {
   }
 }
 
+// ── Error Mapping Utility ───────────────────────────────────────────────────
+
+/**
+ * Map a raw Soroban RPC error to a typed ContractExecutionError.
+ */
 export function mapRpcError(error: unknown, context: ErrorContext = {}): ContractExecutionError {
-  if (error instanceof ContractExecutionError) {
-    return error;
-  }
+  if (error instanceof ContractExecutionError) return error;
 
   const msg = error instanceof Error ? error.message : String(error);
 

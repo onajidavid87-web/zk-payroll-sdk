@@ -1,5 +1,7 @@
 import { rpc, xdr, Keypair, Networks, StrKey } from "@stellar/stellar-sdk";
+import type { ISigner } from "../src/signer/types";
 import { PayrollContractWrapper } from "../src/adapters/PayrollContractWrapper";
+import type { InvokeOptions } from "../src/adapters/BaseContractWrapper";
 import { ProofPayload } from "../src/crypto/IProofGenerator";
 
 // Generate valid Stellar IDs for testing
@@ -16,10 +18,11 @@ class TestablePayrollContractWrapper extends PayrollContractWrapper {
   protected async invoke(
     method: string,
     args: xdr.ScVal[],
-    signer: Keypair,
-    network?: string
+    signer: ISigner,
+    network?: string,
+    options?: InvokeOptions
   ): Promise<xdr.ScVal> {
-    return this.invokeStub(method, args, signer, network);
+    return this.invokeStub(method, args, signer, network, options);
   }
 }
 
@@ -39,12 +42,15 @@ const MOCK_PROOF: ProofPayload = {
 
 describe("PayrollContractWrapper", () => {
   let wrapper: TestablePayrollContractWrapper;
-  let signer: Keypair;
+  let signer: ISigner;
 
   beforeEach(() => {
     const mockServer = {} as rpc.Server;
     wrapper = new TestablePayrollContractWrapper(mockServer, TEST_CONTRACT_ID);
-    signer = Keypair.random();
+    signer = {
+      getPublicKey: jest.fn().mockResolvedValue(TEST_RECIPIENT),
+      sign: jest.fn().mockImplementation(async (tx) => tx),
+    };
   });
 
   describe("privatePay", () => {
@@ -67,6 +73,14 @@ describe("PayrollContractWrapper", () => {
 
       expect(wrapper.invokeStub.mock.calls[0][2]).toBe(signer);
       expect(wrapper.invokeStub.mock.calls[0][3]).toBe(Networks.PUBLIC);
+    });
+
+    it("forwards idempotency options to invoke", async () => {
+      await wrapper.privatePay(TEST_RECIPIENT, 1000n, "native", MOCK_PROOF, signer, Networks.TESTNET, {
+        idempotencyKey: "req-1",
+      });
+
+      expect(wrapper.invokeStub.mock.calls[0][4]).toEqual({ idempotencyKey: "req-1" });
     });
 
     it("defaults to TESTNET when network is not specified", async () => {

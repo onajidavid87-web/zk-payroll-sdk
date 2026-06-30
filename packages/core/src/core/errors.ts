@@ -12,6 +12,13 @@ export interface ErrorContext {
   [key: string]: unknown;
 }
 
+// ── Base Error ──────────────────────────────────────────────────────────────
+
+/**
+ * Base error class for the ZK Payroll SDK.
+ * All SDK errors extend this class, allowing consumers to catch
+ * any SDK error with a single `instanceof ZkPayrollError` check.
+ */
 export class ZkPayrollError extends Error {
   constructor(
     message: string,

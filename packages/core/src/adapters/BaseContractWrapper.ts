@@ -1,14 +1,8 @@
-import {
-  rpc,
-  Contract,
-  TransactionBuilder,
-  Networks,
-  BASE_FEE,
-  xdr,
-  Keypair,
-} from "@stellar/stellar-sdk";
+import { rpc, Contract, TransactionBuilder, Networks, BASE_FEE, xdr } from "@stellar/stellar-sdk";
+import type { ISigner } from "../signer/types";
 import { ContractExecutionError, ContractErrorCode, mapRpcError } from "../errors";
 import { withRetry } from "../core";
+import { IdempotencyRegistry } from "../core/idempotency";
 
 /** How long (ms) to wait between transaction status polls */
 const POLL_INTERVAL_MS = 2_000;
@@ -28,8 +22,17 @@ const MAX_POLLS = 15;
  * Subclasses only need to call `this.invoke(method, args)` and handle
  * the typed return value — no RPC plumbing required.
  */
+export interface InvokeOptions {
+  /**
+   * Optional idempotency key for transaction submission.
+   * Duplicate keys replay the same in-flight/completed submission result.
+   */
+  idempotencyKey?: string;
+}
+
 export abstract class BaseContractWrapper {
   protected readonly contract: Contract;
+  private readonly submissionIdempotency = new IdempotencyRegistry<xdr.ScVal>();
 
   constructor(
     protected readonly server: rpc.Server,
@@ -43,7 +46,7 @@ export abstract class BaseContractWrapper {
    *
    * @param method   - Name of the contract function to call
    * @param args     - XDR-encoded arguments (use `nativeToScVal` from stellar-sdk)
-   * @param signer   - Keypair that signs the transaction
+   * @param signer   - Signer that provides the public key and signs the transaction
    * @param network  - Stellar network passphrase (defaults to testnet)
    * @returns        - The decoded XDR result value
    * @throws         - `ContractExecutionError` on any RPC or contract failure
@@ -51,12 +54,15 @@ export abstract class BaseContractWrapper {
   protected async invoke(
     method: string,
     args: xdr.ScVal[],
-    signer: Keypair,
-    network: string = Networks.TESTNET
+    signer: ISigner,
+    network: string = Networks.TESTNET,
+    options?: InvokeOptions
   ): Promise<xdr.ScVal> {
-    try {
+    const runInvocation = async (): Promise<xdr.ScVal> => {
+      try {
       // ── 1. Load the source account ─────────────────────────────────────
-      const account = await withRetry(() => this.server.getAccount(signer.publicKey()), {
+      const pubKey = await signer.getPublicKey();
+      const account = await withRetry(() => this.server.getAccount(pubKey), {
         attempts: 3,
         delayMs: 100,
       });
@@ -86,7 +92,7 @@ export abstract class BaseContractWrapper {
       // ── 4. Assemble: attach footprint and authorisation from simulation ─
       const preparedTx = rpc.assembleTransaction(rawTx, simResult).build();
 
-      preparedTx.sign(signer);
+      await signer.sign(preparedTx);
 
       // ── 5. Submit ──────────────────────────────────────────────────────
       const sendResult = await withRetry(() => this.server.sendTransaction(preparedTx), {
@@ -103,13 +109,25 @@ export abstract class BaseContractWrapper {
         );
       }
 
-      // ── 6. Poll for final status ───────────────────────────────────────
-      return await this.pollForResult(sendResult.hash, method);
-    } catch (err) {
-      // Re-throw already-typed errors, map everything else
-      if (err instanceof ContractExecutionError) throw err;
-      throw mapRpcError(err);
+        // ── 6. Poll for final status ───────────────────────────────────────
+        return await this.pollForResult(sendResult.hash, method);
+      } catch (err) {
+        // Re-throw already-typed errors, map everything else
+        if (err instanceof ContractExecutionError) throw err;
+        throw mapRpcError(err);
+      }
+    };
+
+    const idempotencyKey = options?.idempotencyKey?.trim();
+    if (!idempotencyKey) {
+      return runInvocation();
     }
+
+    return this.submissionIdempotency.execute(
+      `${this.contractId}:${method}:${idempotencyKey}`,
+      runInvocation,
+      { cacheErrors: false }
+    );
   }
 
   // ── Private helpers ──────────────────────────────────────────────────────

@@ -2,6 +2,33 @@
 
 ## Classes
 
+## Idempotent payroll retries
+
+Use `idempotencyKey` when submitting payroll payments so client-side retries do not create duplicate submissions.
+
+```typescript
+import { PayrollService, createPaymentIdempotencyKey } from "@zk-payroll/sdk";
+
+const key = createPaymentIdempotencyKey({
+  recipient: "G...",
+  amount: 1000n,
+  asset: "native",
+});
+
+const result = await service.processPayment({
+  recipient: "G...",
+  amount: 1000n,
+  asset: "native",
+  idempotencyKey: key,
+});
+```
+
+### Recommendation
+
+- Generate one idempotency key per user intent (for example, button click / request ID)
+- Reuse the same key for retries of that same intent
+- Use a new key for genuinely new payment requests
+
 ### Typed Contract Clients
 
 The SDK provides fully typed client wrappers for the core ZK Payroll Soroban contracts. Each client extends `BaseContractWrapper` and handles XDR encoding/decoding automatically.

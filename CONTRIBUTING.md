@@ -21,6 +21,24 @@ npm run typecheck    # Type check
 npm run format       # Format code
 ```
 
+### Snapshot Tests
+
+The SDK uses Jest snapshot tests to lock down serialized proof request payloads.
+Snapshots are stored in `tests/__snapshots__/` alongside the corresponding test file.
+
+**Updating snapshots** after an intentional serialization change:
+
+```bash
+npx jest --updateSnapshot
+# or
+npx jest -u
+```
+
+Commit the updated `.snap` file together with the code change. When reviewing
+snapshot diffs, verify that field ordering, type mappings, and hex-encoded XDR
+lengths are consistent with the contract ABI expectations. See the header
+comments in `tests/proof-request-snapshots.test.ts` for detailed guidance.
+
 > **Troubleshooting:** If you hit issues, check the [Troubleshooting Guide](./docs/TROUBLESHOOTING.md).
 
 ## Architecture

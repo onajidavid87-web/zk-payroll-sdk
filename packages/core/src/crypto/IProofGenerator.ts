@@ -44,10 +44,50 @@ export interface ProofPayload {
 
 /** Configuration for proof generation artifacts. */
 export interface ProofGeneratorConfig {
-  /** URL or path to the circuit .wasm file */
+  /**
+   * URL or path to the circuit .wasm file.
+   *
+   * Accepts HTTP(S) URLs for remote fetching, or local filesystem paths
+   * (absolute, relative, or `file://` URIs) for offline resolution.
+   *
+   * When {@link wasmSource} is set, this field is ignored.
+   */
   wasmUrl: string;
-  /** URL or path to the proving key .zkey file */
+  /**
+   * URL or path to the proving key .zkey file.
+   *
+   * Accepts HTTP(S) URLs for remote fetching, or local filesystem paths
+   * (absolute, relative, or `file://` URIs) for offline resolution.
+   *
+   * When {@link zkeySource} is set, this field is ignored.
+   */
   zkeyUrl: string;
+  /**
+   * Typed artifact source for the .wasm file.
+   * When set, this takes precedence over {@link wasmUrl}.
+   *
+   * @example
+   * ```typescript
+   * // Local file
+   * wasmSource: { type: "local", path: "./circuits/payroll.wasm" }
+   * // Remote URL
+   * wasmSource: { type: "remote", url: "https://cdn.example.com/payroll.wasm" }
+   * ```
+   */
+  wasmSource?: import("./IArtifactResolver").ArtifactSource;
+  /**
+   * Typed artifact source for the .zkey file.
+   * When set, this takes precedence over {@link zkeyUrl}.
+   *
+   * @example
+   * ```typescript
+   * // Local file
+   * zkeySource: { type: "local", path: "./circuits/payroll.zkey" }
+   * // Remote URL
+   * zkeySource: { type: "remote", url: "https://cdn.example.com/payroll.zkey" }
+   * ```
+   */
+  zkeySource?: import("./IArtifactResolver").ArtifactSource;
   /** Optional cache TTL in seconds for downloaded artifacts */
   artifactCacheTTL?: number;
 }

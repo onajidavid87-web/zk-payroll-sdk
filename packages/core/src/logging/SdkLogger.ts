@@ -1,3 +1,5 @@
+import { redactObject } from "../redaction/RedactionEngine";
+
 export type LogLevel = "info" | "warn" | "error";
 
 export interface LogEvent {
@@ -41,6 +43,5 @@ export function createHookLogger(hook: LoggerHook): SdkLogger {
  * Delegates to the redaction module so the sensitive-field list stays in one place.
  */
 export function redactSensitive(context: Record<string, unknown>): Record<string, unknown> {
-  const { redactObject } = require("../redaction/RedactionEngine");
   return redactObject(context).redacted as Record<string, unknown>;
 }

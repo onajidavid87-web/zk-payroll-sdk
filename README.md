@@ -23,6 +23,27 @@ await service.processPayment(
 );
 ```
 
+## Idempotent retries
+
+For safe retries, pass an `idempotencyKey` when processing a payment.
+
+```typescript
+import { PayrollService, createPaymentIdempotencyKey } from "@zk-payroll/sdk";
+
+const idempotencyKey = createPaymentIdempotencyKey({
+  recipient: "G...",
+  amount: 1000n,
+  asset: "native",
+});
+
+await service.processPayment({
+  recipient: "G...",
+  amount: 1000n,
+  asset: "native",
+  idempotencyKey,
+});
+```
+
 ## Features
 
 - **Typed Contract Clients**: Fully typed client wrappers for PayrollRegistry, SalaryCommitment, ProofVerifier, and PaymentExecutor contracts.
@@ -61,6 +82,10 @@ const proof = await generator.generateProof(witness);
 ```
 
 See [ZK Proof Generation Guide](./docs/ZK_PROOF_GENERATION.md) for detailed documentation.
+
+## Backend Worker Quickstart
+
+Teams building internal payroll automation workers can follow the [Backend Worker Quickstart](./docs/BACKEND_WORKER_QUICKSTART.md) for a practical end-to-end prototype covering setup, polling, retries, and event handling.
 
 ## Testing
 

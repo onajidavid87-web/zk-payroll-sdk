@@ -1,9 +1,12 @@
 import { Keypair, Networks } from "@stellar/stellar-sdk";
+import type { ISigner } from "./signer/types";
+import { toISigner } from "./signer/KeypairSigner";
 import { PayrollContractWrapper } from "./adapters/PayrollContractWrapper";
 import { IProofGenerator, ProofPayload } from "./crypto/IProofGenerator";
 import { PayrollError, PayrollServiceErrorCode } from "./errors";
 import { PaymentParams, PaymentResult } from "./types";
 import { SdkLogger } from "./logging/SdkLogger";
+import { IdempotencyRegistry, createPaymentIdempotencyKey } from "./core/idempotency";
 
 export interface Transaction {
   amount: bigint;
@@ -24,19 +27,42 @@ export interface FilterCriteria {
  * Sensitive fields (recipient, amount, asset) are never written to the log.
  */
 export class PayrollService {
+  private readonly signer: ISigner;
+  private readonly paymentIdempotency = new IdempotencyRegistry<PaymentResult>();
+
   constructor(
     private readonly contractWrapper: PayrollContractWrapper,
     private readonly proofGenerator: IProofGenerator,
-    private readonly signer: Keypair,
+    signer: Keypair | ISigner,
     private readonly network: string = Networks.TESTNET,
     private readonly logger?: SdkLogger
-  ) {}
+  ) {
+    this.signer = toISigner(signer);
+  }
 
   /**
    * Process a private payment by generating a ZK proof and submitting
    * the transaction to the Soroban contract.
    */
   async processPayment(params: PaymentParams): Promise<PaymentResult> {
+    const explicitKey = params.idempotencyKey?.trim();
+    if (!explicitKey) {
+      return this.processPaymentInternal(params);
+    }
+
+    return this.paymentIdempotency.execute(explicitKey, async () => {
+      return this.processPaymentInternal(params);
+    });
+  }
+
+  /**
+   * Build a deterministic idempotency key from payment data.
+   */
+  static createIdempotencyKey(params: Pick<PaymentParams, "recipient" | "amount" | "asset">): string {
+    return createPaymentIdempotencyKey(params);
+  }
+
+  private async processPaymentInternal(params: PaymentParams): Promise<PaymentResult> {
     const { recipient, amount, asset } = params;
 
     this.logger?.info("payment_start");
@@ -80,7 +106,8 @@ export class PayrollService {
       asset,
       proof,
       this.signer,
-      this.network
+      this.network,
+      params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined
     );
 
     const result: PaymentResult = {

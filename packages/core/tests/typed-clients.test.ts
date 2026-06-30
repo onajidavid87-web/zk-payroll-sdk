@@ -1,4 +1,5 @@
 import { rpc, xdr, Keypair, Networks, StrKey, nativeToScVal, Address } from "@stellar/stellar-sdk";
+import type { ISigner } from "../src/signer/types";
 import { PayrollRegistryClient } from "../src/clients/PayrollRegistryClient";
 import { SalaryCommitmentClient } from "../src/clients/SalaryCommitmentClient";
 import { ProofVerifierClient } from "../src/clients/ProofVerifierClient";
@@ -107,8 +108,8 @@ class TestablePayrollRegistryClient extends PayrollRegistryClient {
   protected async invoke(
     method: string,
     args: xdr.ScVal[],
-    signer: Keypair,
-    network?: string
+    signer: ISigner,
+    network: string = Networks.TESTNET
   ): Promise<xdr.ScVal> {
     return this.invokeStub(method, args, signer, network);
   }
@@ -120,8 +121,8 @@ class TestableSalaryCommitmentClient extends SalaryCommitmentClient {
   protected async invoke(
     method: string,
     args: xdr.ScVal[],
-    signer: Keypair,
-    network?: string
+    signer: ISigner,
+    network: string = Networks.TESTNET
   ): Promise<xdr.ScVal> {
     return this.invokeStub(method, args, signer, network);
   }
@@ -133,8 +134,8 @@ class TestableProofVerifierClient extends ProofVerifierClient {
   protected async invoke(
     method: string,
     args: xdr.ScVal[],
-    signer: Keypair,
-    network?: string
+    signer: ISigner,
+    network: string = Networks.TESTNET
   ): Promise<xdr.ScVal> {
     return this.invokeStub(method, args, signer, network);
   }
@@ -146,8 +147,8 @@ class TestablePaymentExecutorClient extends PaymentExecutorClient {
   protected async invoke(
     method: string,
     args: xdr.ScVal[],
-    signer: Keypair,
-    network?: string
+    signer: ISigner,
+    network: string = Networks.TESTNET
   ): Promise<xdr.ScVal> {
     return this.invokeStub(method, args, signer, network);
   }

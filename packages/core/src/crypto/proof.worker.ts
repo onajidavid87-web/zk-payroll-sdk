@@ -16,6 +16,8 @@
 import { groth16 } from "snarkjs";
 import type { ProofPayload, ProofGeneratorConfig } from "./IProofGenerator";
 import type { WorkerRequest, WorkerResponse, ProofProgressStage } from "./WorkerMessages";
+import { createPayrollProgressEvent } from "../progress";
+import type { PayrollProgressStage } from "../progress";
 
 // Typed reference to the Web Worker global scope.
 // Using an interface avoids conflicts between the DOM lib (Window) and the
@@ -39,8 +41,24 @@ function emit(msg: WorkerResponse): void {
   scope.postMessage(msg);
 }
 
+const workerStageMap: Record<ProofProgressStage, PayrollProgressStage> = {
+  loading_wasm: "proof_loading_wasm",
+  loading_zkey: "proof_loading_zkey",
+  generating: "proof_generating",
+  done: "proof_done",
+};
+
 function emitProgress(id: string, stage: ProofProgressStage, progress?: number): void {
-  emit({ type: "PROGRESS", id, stage, progress });
+  emit({
+    type: "PROGRESS",
+    id,
+    event: createPayrollProgressEvent({
+      operation: "proof",
+      stage: workerStageMap[stage],
+      message: stage,
+      progress,
+    }),
+  });
 }
 
 async function loadWasm(url: string, id: string): Promise<ArrayBuffer> {

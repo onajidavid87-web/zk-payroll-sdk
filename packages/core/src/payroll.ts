@@ -7,6 +7,7 @@ import { PayrollError, PayrollServiceErrorCode } from "./errors";
 import { PaymentParams, PaymentResult } from "./types";
 import { SdkLogger } from "./logging/SdkLogger";
 import { IdempotencyRegistry, createPaymentIdempotencyKey } from "./core/idempotency";
+import { createPayrollProgressEvent } from "./progress";
 
 export interface Transaction {
   amount: bigint;
@@ -58,7 +59,9 @@ export class PayrollService {
   /**
    * Build a deterministic idempotency key from payment data.
    */
-  static createIdempotencyKey(params: Pick<PaymentParams, "recipient" | "amount" | "asset">): string {
+  static createIdempotencyKey(
+    params: Pick<PaymentParams, "recipient" | "amount" | "asset">
+  ): string {
     return createPaymentIdempotencyKey(params);
   }
 
@@ -68,8 +71,24 @@ export class PayrollService {
     this.logger?.info("payment_start");
 
     // 1. Validate inputs
+    params.onProgress?.(
+      createPayrollProgressEvent({
+        operation: "payment",
+        stage: "validation",
+        message: "validation_started",
+        progress: 0,
+      })
+    );
     try {
       this.validatePaymentParams(params);
+      params.onProgress?.(
+        createPayrollProgressEvent({
+          operation: "payment",
+          stage: "validation",
+          message: "validation_completed",
+          progress: 100,
+        })
+      );
     } catch (error) {
       this.logger?.warn("payment_validation_failed", {
         error: error instanceof Error ? error.message : String(error),
@@ -86,7 +105,7 @@ export class PayrollService {
 
     let proof: ProofPayload;
     try {
-      proof = await this.proofGenerator.generateProof(witness);
+      proof = await this.proofGenerator.generateProof(witness, params.onProgress);
     } catch (error) {
       if (error instanceof PayrollError) {
         throw error;
@@ -98,6 +117,15 @@ export class PayrollService {
     }
 
     // 3. Invoke contract
+    params.onProgress?.(
+      createPayrollProgressEvent({
+        operation: "payment",
+        stage: "submission_preparing",
+        message: "submission_preparing",
+        progress: 0,
+        metadata: { method: "private_pay" },
+      })
+    );
     this.logger?.info("contract_invocation_start", { method: "private_pay" });
 
     const resultXdr = await this.contractWrapper.privatePay(
@@ -108,6 +136,16 @@ export class PayrollService {
       this.signer,
       this.network,
       params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined
+    );
+
+    params.onProgress?.(
+      createPayrollProgressEvent({
+        operation: "payment",
+        stage: "submission_done",
+        message: "submission_done",
+        progress: 100,
+        metadata: { method: "private_pay" },
+      })
     );
 
     const result: PaymentResult = {

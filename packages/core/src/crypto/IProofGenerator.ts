@@ -1,5 +1,10 @@
+import type { PayrollProgressCallback } from "../progress";
+
 export interface IProofGenerator {
-  generateProof(witness: Record<string, unknown>): Promise<ProofPayload>;
+  generateProof(
+    witness: Record<string, unknown>,
+    onProgress?: PayrollProgressCallback
+  ): Promise<ProofPayload>;
 }
 
 /** Status returned by preload() and getPreloadStatus(). */

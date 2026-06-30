@@ -1,3 +1,5 @@
+import type { PayrollProgressCallback } from "../progress";
+
 export interface PayrollRecord {
   id: string;
   recipient: string;
@@ -22,6 +24,8 @@ export interface PaymentParams {
    * without triggering duplicate submissions.
    */
   idempotencyKey?: string;
+  /** Optional structured progress handler for validation, proof, and submission preparation. */
+  onProgress?: PayrollProgressCallback;
 }
 
 /**

@@ -30,9 +30,8 @@ export class PayrollError extends ZkPayrollError {
   constructor(message: string, code: number) {
     super(message, String(code));
     this.name = "PayrollError";
+    (this as unknown as { code: number }).code = code;
   }
-
-  return new ContractExecutionError(message, code, context);
 }
 
 /** @deprecated Use structured error logging instead. */

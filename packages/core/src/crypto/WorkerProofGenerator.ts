@@ -1,14 +1,7 @@
 import { IProofGenerator, ProofPayload, ProofGeneratorConfig } from "./IProofGenerator";
-import { WorkerRequest, WorkerResponse, ProofProgressStage } from "./WorkerMessages";
+import { WorkerRequest, WorkerResponse } from "./WorkerMessages";
 import { PayrollError } from "../errors";
-
-/**
- * Callback invoked as the worker reports proof generation progress.
- *
- * @param stage    - Current stage of work inside the worker
- * @param progress - Optional 0-100 completion percentage
- */
-export type ProofProgressCallback = (stage: ProofProgressStage, progress?: number) => void;
+import type { PayrollProgressCallback } from "../progress";
 
 /**
  * Options for WorkerProofGenerator.
@@ -18,7 +11,7 @@ export interface WorkerProofOptions {
    * Global progress handler applied to every generateProof call unless
    * overridden by the per-call onProgress argument.
    */
-  onProgress?: ProofProgressCallback;
+  onProgress?: PayrollProgressCallback;
   /**
    * Maximum milliseconds to wait for the worker to respond before
    * rejecting with a timeout error. Defaults to 120 000 ms (2 minutes).
@@ -33,26 +26,17 @@ export interface WorkerProofOptions {
  */
 export interface WorkerLike {
   postMessage(message: WorkerRequest): void;
-  addEventListener(
-    type: "message",
-    listener: (event: { data: WorkerResponse }) => void
-  ): void;
+  addEventListener(type: "message", listener: (event: { data: WorkerResponse }) => void): void;
   addEventListener(type: "error", listener: (event: { message: string }) => void): void;
-  removeEventListener(
-    type: "message",
-    listener: (event: { data: WorkerResponse }) => void
-  ): void;
-  removeEventListener(
-    type: "error",
-    listener: (event: { message: string }) => void
-  ): void;
+  removeEventListener(type: "message", listener: (event: { data: WorkerResponse }) => void): void;
+  removeEventListener(type: "error", listener: (event: { message: string }) => void): void;
   terminate(): void;
 }
 
 interface PendingRequest {
   resolve: (payload: ProofPayload) => void;
   reject: (err: Error) => void;
-  onProgress?: ProofProgressCallback;
+  onProgress?: PayrollProgressCallback;
   timer: ReturnType<typeof setTimeout>;
 }
 
@@ -119,13 +103,11 @@ export class WorkerProofGenerator implements IProofGenerator {
       case "PROOF_ERROR":
         clearTimeout(pending.timer);
         this.pending.delete(msg.id);
-        pending.reject(
-          new PayrollError(`Worker proof generation failed: ${msg.message}`, 500)
-        );
+        pending.reject(new PayrollError(`Worker proof generation failed: ${msg.message}`, 500));
         break;
 
       case "PROGRESS":
-        pending.onProgress?.(msg.stage, msg.progress);
+        pending.onProgress?.(msg.event);
         break;
 
       case "PRELOAD_DONE":
@@ -152,18 +134,13 @@ export class WorkerProofGenerator implements IProofGenerator {
 
   private dispatch(
     req: WorkerRequest,
-    onProgress?: ProofProgressCallback
+    onProgress?: PayrollProgressCallback
   ): Promise<ProofPayload> {
     return new Promise<ProofPayload>((resolve, reject) => {
       const timeoutMs = this.options.timeoutMs ?? 120_000;
       const timer = setTimeout(() => {
         this.pending.delete(req.id);
-        reject(
-          new PayrollError(
-            `Proof generation timed out after ${timeoutMs}ms`,
-            408
-          )
-        );
+        reject(new PayrollError(`Proof generation timed out after ${timeoutMs}ms`, 408));
       }, timeoutMs);
 
       this.pending.set(req.id, {
@@ -192,7 +169,7 @@ export class WorkerProofGenerator implements IProofGenerator {
    */
   generateProof(
     witness: Record<string, unknown>,
-    onProgress?: ProofProgressCallback
+    onProgress?: PayrollProgressCallback
   ): Promise<ProofPayload> {
     return this.dispatch(
       { type: "GENERATE_PROOF", id: this.nextId(), witness, config: this.config },
@@ -217,9 +194,7 @@ export class WorkerProofGenerator implements IProofGenerator {
    * on the next proof generation request.
    */
   clearCache(): Promise<void> {
-    return this.dispatch({ type: "CLEAR_CACHE", id: this.nextId() }).then(
-      () => undefined
-    );
+    return this.dispatch({ type: "CLEAR_CACHE", id: this.nextId() }).then(() => undefined);
   }
 
   /**

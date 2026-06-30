@@ -44,11 +44,14 @@ describe("PayrollService", () => {
         asset: "native",
       });
 
-      expect(mockProofGen.generateProof).toHaveBeenCalledWith({
-        recipient: "GABC123",
-        amount: "1000000",
-        asset: "native",
-      });
+      expect(mockProofGen.generateProof).toHaveBeenCalledWith(
+        {
+          recipient: "GABC123",
+          amount: "1000000",
+          asset: "native",
+        },
+        undefined
+      );
     });
 
     it("invokes contract.privatePay with correct args after proof generation", async () => {
@@ -71,6 +74,44 @@ describe("PayrollService", () => {
       expect(typeof callArgs[4].getPublicKey).toBe("function");
       expect(typeof callArgs[4].sign).toBe("function");
       expect(callArgs[5]).toBe(Networks.TESTNET);
+    });
+
+    it("emits structured progress for validation, proof generation, and submission prep", async () => {
+      const { mockWrapper, mockProofGen, signer } = createMocks();
+      const service = new PayrollService(mockWrapper, mockProofGen, signer);
+      const onProgress = jest.fn();
+
+      (mockProofGen.generateProof as jest.Mock).mockImplementation(async (_witness, progress) => {
+        progress({
+          operation: "proof",
+          stage: "proof_generating",
+          message: "generating",
+          progress: 0,
+          timestamp: "2026-06-30T00:00:00.000Z",
+        });
+        return MOCK_PROOF;
+      });
+
+      await service.processPayment({
+        recipient: "GABC123",
+        amount: 100n,
+        asset: "native",
+        onProgress,
+      });
+
+      expect(mockProofGen.generateProof).toHaveBeenCalledWith(expect.any(Object), onProgress);
+      expect(onProgress.mock.calls.map(([event]) => event.stage)).toEqual([
+        "validation",
+        "validation",
+        "proof_generating",
+        "submission_preparing",
+        "submission_done",
+      ]);
+      expect(onProgress.mock.calls[0][0]).toMatchObject({
+        operation: "payment",
+        message: "validation_started",
+        progress: 0,
+      });
     });
 
     it("returns a PaymentResult with txHash and publicSignals", async () => {
@@ -106,7 +147,7 @@ describe("PayrollService", () => {
 
       expect(first).toEqual(second);
       expect(mockProofGen.generateProof).toHaveBeenCalledTimes(1);
-      expect((mockWrapper.privatePay as jest.Mock)).toHaveBeenCalledTimes(1);
+      expect(mockWrapper.privatePay as jest.Mock).toHaveBeenCalledTimes(1);
     });
 
     it("does not deduplicate when idempotencyKey is omitted", async () => {
@@ -117,7 +158,7 @@ describe("PayrollService", () => {
       await service.processPayment({ recipient: "GABC123", amount: 100n, asset: "native" });
 
       expect(mockProofGen.generateProof).toHaveBeenCalledTimes(2);
-      expect((mockWrapper.privatePay as jest.Mock)).toHaveBeenCalledTimes(2);
+      expect(mockWrapper.privatePay as jest.Mock).toHaveBeenCalledTimes(2);
     });
 
     it("builds deterministic idempotency keys for payment payloads", () => {

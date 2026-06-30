@@ -14,11 +14,7 @@ export { PayrollContract } from "./contract";
 export { ZKProofGenerator } from "./crypto/proofs";
 export { SnarkjsProofGenerator } from "./crypto/SnarkjsProofGenerator";
 export { WorkerProofGenerator } from "./crypto/WorkerProofGenerator";
-export type {
-  WorkerLike,
-  WorkerProofOptions,
-  ProofProgressCallback,
-} from "./crypto/WorkerProofGenerator";
+export type { WorkerLike, WorkerProofOptions } from "./crypto/WorkerProofGenerator";
 export type { WorkerRequest, WorkerResponse, ProofProgressStage } from "./crypto/WorkerMessages";
 export {
   ZkPayrollError,
@@ -34,6 +30,7 @@ export type { ErrorContext, ContractErrorCodeType } from "./errors";
 export { DEFAULT_CONFIG } from "./config";
 export * from "./cache";
 export * from "./types";
+export * from "./progress";
 export { IdempotencyRegistry, createPaymentIdempotencyKey } from "./core/idempotency";
 export * from "./crypto/IProofGenerator";
 export * from "./adapters";

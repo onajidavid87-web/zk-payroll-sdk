@@ -2,6 +2,7 @@ import { WorkerProofGenerator, WorkerLike } from "../src/crypto/WorkerProofGener
 import { ProofGeneratorConfig, ProofPayload } from "../src/crypto/IProofGenerator";
 import { WorkerResponse, WorkerRequest } from "../src/crypto/WorkerMessages";
 import { PayrollError } from "../src/errors";
+import { createPayrollProgressEvent, PayrollProgressStage } from "../src/progress";
 
 // ── Fake Worker ───────────────────────────────────────────────────────────────
 
@@ -81,6 +82,15 @@ const mockPayload: ProofPayload = {
   publicSignals: ["100", "200"],
 };
 
+function progressEvent(stage: PayrollProgressStage, progress?: number) {
+  return createPayrollProgressEvent({
+    operation: "proof",
+    stage,
+    message: stage,
+    progress,
+  });
+}
+
 function setup(opts?: ConstructorParameters<typeof WorkerProofGenerator>[2]) {
   const worker = new FakeWorker();
   const generator = new WorkerProofGenerator(worker, config, opts);
@@ -138,15 +148,15 @@ describe("WorkerProofGenerator", () => {
       const promise = generator.generateProof({ amount: 100n }, onProgress);
       const { id } = worker.lastRequest();
 
-      worker.reply({ type: "PROGRESS", id, stage: "loading_wasm" });
-      worker.reply({ type: "PROGRESS", id, stage: "generating", progress: 0 });
+      worker.reply({ type: "PROGRESS", id, event: progressEvent("proof_loading_wasm") });
+      worker.reply({ type: "PROGRESS", id, event: progressEvent("proof_generating", 0) });
       worker.reply({ type: "PROOF_RESULT", id, payload: mockPayload });
 
       await promise;
 
       expect(onProgress).toHaveBeenCalledTimes(2);
-      expect(onProgress).toHaveBeenNthCalledWith(1, "loading_wasm", undefined);
-      expect(onProgress).toHaveBeenNthCalledWith(2, "generating", 0);
+      expect(onProgress.mock.calls[0][0]).toMatchObject({ stage: "proof_loading_wasm" });
+      expect(onProgress.mock.calls[1][0]).toMatchObject({ stage: "proof_generating", progress: 0 });
     });
 
     it("falls back to global onProgress when no per-call callback is supplied", async () => {
@@ -156,11 +166,11 @@ describe("WorkerProofGenerator", () => {
       const promise = generator.generateProof({ amount: 200n });
       const { id } = worker.lastRequest();
 
-      worker.reply({ type: "PROGRESS", id, stage: "loading_zkey" });
+      worker.reply({ type: "PROGRESS", id, event: progressEvent("proof_loading_zkey") });
       worker.reply({ type: "PROOF_RESULT", id, payload: mockPayload });
 
       await promise;
-      expect(globalProgress).toHaveBeenCalledWith("loading_zkey", undefined);
+      expect(globalProgress.mock.calls[0][0]).toMatchObject({ stage: "proof_loading_zkey" });
     });
 
     it("per-call onProgress overrides the global one", async () => {
@@ -171,11 +181,14 @@ describe("WorkerProofGenerator", () => {
       const promise = generator.generateProof({ amount: 300n }, perCallProgress);
       const { id } = worker.lastRequest();
 
-      worker.reply({ type: "PROGRESS", id, stage: "generating", progress: 50 });
+      worker.reply({ type: "PROGRESS", id, event: progressEvent("proof_generating", 50) });
       worker.reply({ type: "PROOF_RESULT", id, payload: mockPayload });
 
       await promise;
-      expect(perCallProgress).toHaveBeenCalledWith("generating", 50);
+      expect(perCallProgress.mock.calls[0][0]).toMatchObject({
+        stage: "proof_generating",
+        progress: 50,
+      });
       expect(globalProgress).not.toHaveBeenCalled();
     });
 

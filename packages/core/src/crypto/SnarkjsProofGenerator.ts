@@ -8,6 +8,8 @@ import {
   PreloadStatus,
 } from "./IProofGenerator";
 import { SdkLogger } from "../logging/SdkLogger";
+import { createPayrollProgressEvent } from "../progress";
+import type { PayrollProgressCallback } from "../progress";
 import { IArtifactResolver, ArtifactSource } from "./IArtifactResolver";
 import { LocalArtifactResolver } from "./LocalArtifactResolver";
 import { RemoteArtifactResolver } from "./RemoteArtifactResolver";
@@ -209,7 +211,10 @@ export class SnarkjsProofGenerator implements IPreloadableProofGenerator {
     this.resolver = buildResolver(config, logger);
   }
 
-  async generateProof(witness: Record<string, unknown>): Promise<ProofPayload> {
+  async generateProof(
+    witness: Record<string, unknown>,
+    onProgress?: PayrollProgressCallback
+  ): Promise<ProofPayload> {
     this.logger?.info("proof_generation_start", { wasmUrl: this.config.wasmUrl });
 
     try {
@@ -218,13 +223,43 @@ export class SnarkjsProofGenerator implements IPreloadableProofGenerator {
         const cached = await this.cache.get(cacheKey);
         if (cached !== null) {
           this.logger?.info("proof_cache_hit");
+          onProgress?.(
+            createPayrollProgressEvent({
+              operation: "proof",
+              stage: "proof_done",
+              message: "proof_cache_hit",
+              progress: 100,
+            })
+          );
           return JSON.parse(cached);
         }
         this.logger?.info("proof_cache_miss");
       }
 
+      onProgress?.(
+        createPayrollProgressEvent({
+          operation: "proof",
+          stage: "proof_loading_wasm",
+          message: "loading_wasm",
+        })
+      );
+      onProgress?.(
+        createPayrollProgressEvent({
+          operation: "proof",
+          stage: "proof_loading_zkey",
+          message: "loading_zkey",
+        })
+      );
       const [wasm, zkey] = await Promise.all([this.fetchWasm(), this.fetchZkey()]);
 
+      onProgress?.(
+        createPayrollProgressEvent({
+          operation: "proof",
+          stage: "proof_generating",
+          message: "generating",
+          progress: 0,
+        })
+      );
       const { proof, publicSignals } = await groth16.fullProve(witness, wasm, zkey);
 
       const payload = this.formatProofPayload(proof, publicSignals);
@@ -236,6 +271,14 @@ export class SnarkjsProofGenerator implements IPreloadableProofGenerator {
       }
 
       this.logger?.info("proof_generation_complete");
+      onProgress?.(
+        createPayrollProgressEvent({
+          operation: "proof",
+          stage: "proof_done",
+          message: "done",
+          progress: 100,
+        })
+      );
       return payload;
     } catch (error) {
       this.logger?.error("proof_generation_failed", {

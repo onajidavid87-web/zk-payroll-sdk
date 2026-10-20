@@ -23,6 +23,23 @@ const txHash = await mockContract.deposit(1000n);
 expect(mockEnv.wasCalled("deposit")).toBe(true);
 ```
 
+## Deterministic Test Fixtures
+
+Reusable, deterministic fixtures for payroll batches, employees, transactions, proof references, and reconciliation are available via `@zk-payroll/core`:
+
+```typescript
+import {
+  createPayrollBatchFixture,
+  createEmployeeFixture,
+  createTransactionFixture,
+  createProofReferenceFixture,
+  createReconciliationResultFixture,
+  FIXTURE_PAYROLL_BATCH_VALID_MULTI,
+} from "@zk-payroll/core";
+```
+
+See [Deterministic Test Fixtures Guide](../../docs/DETERMINISTIC_FIXTURES.md) for full details and examples.
+
 ## Documentation
 
 See the [complete testing guide](../../docs/TESTING.md) for detailed documentation.
@@ -30,3 +47,4 @@ See the [complete testing guide](../../docs/TESTING.md) for detailed documentati
 ## Examples
 
 Check out the [example file](../examples/mock-usage.example.ts) for practical usage examples.
+

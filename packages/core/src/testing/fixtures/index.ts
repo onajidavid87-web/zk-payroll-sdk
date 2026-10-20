@@ -56,3 +56,4 @@ export function createFixture(preset: FixturePreset, seed?: number): PayrollScen
 }
 
 export { PayrollFixtureGenerator } from "../generators";
+export * from "./deterministicFixtures";

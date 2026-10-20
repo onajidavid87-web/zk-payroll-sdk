@@ -1157,6 +1157,7 @@ For complete architectural patterns, threat models, and an incident response che
 - [Audit Grant Scope Reader](./docs/audit-grant-scope.md) - Effective audit scope and lifecycle state for an auditor's grants
 - [Payroll UX Helpers](./docs/payroll-ux-helpers.md) - Configurable logging, completion polling, run summaries, and command serialization
 - [Cache Invalidation Helpers](./docs/CACHE_INVALIDATION.md) - Predictable event-driven and manual cache invalidation, key management, and staleness detection
+- [Deterministic Test Fixtures](./docs/DETERMINISTIC_FIXTURES.md) - Reusable fixture builders and valid/invalid scenarios for batches, employees, transactions, proofs, and reconciliation
 - [ZK Proof Generation](./docs/ZK_PROOF_GENERATION.md) - Detailed proof generation guide
 - [Examples](./examples/README.md) - Runnable examples and setup steps
 

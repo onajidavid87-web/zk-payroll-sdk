@@ -41,3 +41,4 @@ export interface PaymentResult {
 export * from "../eligibility/types";
 export * from "../eligibility/reasonCodes";
 export * from "../employees/types";
+export * from "./fixtures";

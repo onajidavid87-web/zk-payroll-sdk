@@ -86,3 +86,15 @@ export const createPayrollEventFixture = (overrides = {}) => ({
 ## Privacy guidance
 
 Fixtures must never ship real payroll secrets, note data, or witness material. When an object includes a sensitive field, replace it with a placeholder such as `[REDACTED]` or omit the field entirely.
+
+## Deterministic Fixtures Suite
+
+For comprehensive, ready-to-use deterministic fixtures covering:
+- Payroll batches (`createPayrollBatchFixture`, valid/invalid pre-built batches)
+- Employee profiles (`createEmployeeFixture`, active/terminated/blocked profiles)
+- Transactions (`createTransactionFixture`, confirmed/failed/revert states)
+- Proof references (`createProofReferenceFixture`, canonical formatting and validation)
+- Reconciliation results (`createReconciliationResultFixture`, matched diffs and treasury reports)
+
+Import directly from `./deterministic-fixtures` or `@zk-payroll/core`. See the full guide at [`docs/DETERMINISTIC_FIXTURES.md`](../../docs/DETERMINISTIC_FIXTURES.md).
+

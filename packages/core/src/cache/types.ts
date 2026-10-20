@@ -32,6 +32,18 @@ export enum CacheNamespace {
 
   /** Payroll configurations and employer-specific settings. */
   CONFIGURATION = "configuration",
+
+  /** Cached payroll execution, batch, and cycle states. */
+  PAYROLL = "payroll",
+
+  /** Cached employee registry, eligibility, and destination states. */
+  EMPLOYEE = "employee",
+
+  /** Cached treasury balances, reservations, and checkpoint states. */
+  TREASURY = "treasury",
+
+  /** Cached contract state, configuration, and registry snapshots. */
+  CONTRACT = "contract",
 }
 
 /**

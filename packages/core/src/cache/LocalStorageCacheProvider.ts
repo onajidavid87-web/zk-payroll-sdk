@@ -84,4 +84,29 @@ export class LocalStorageCacheProvider<T = string> implements MetadataCacheProvi
   async has(key: string): Promise<boolean> {
     return (await this.get(key)) !== null;
   }
+
+  async del(key: string): Promise<void> {
+    try {
+      localStorage.removeItem(this.key(key));
+    } catch (err) {
+      throw new PayrollError(`LocalStorageCacheProvider.del failed: ${err}`, 505);
+    }
+  }
+
+  async clear(): Promise<void> {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(this.prefix)) {
+          keysToRemove.push(k);
+        }
+      }
+      for (const k of keysToRemove) {
+        localStorage.removeItem(k);
+      }
+    } catch (err) {
+      throw new PayrollError(`LocalStorageCacheProvider.clear failed: ${err}`, 506);
+    }
+  }
 }

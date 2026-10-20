@@ -10,7 +10,7 @@ import {
 import { BatchValidationFailedError } from "../batch/BatchPayloadBuilder";
 
 export const RetryCategory = {
-  RETRYABLE: "RETRYABLE4",
+  RETRYABLE: "RETRYABLE",
   NON_RETRYABLE: "NON_RETRYABLE",
   UNKNOWN: "UNKNOWN",
 } as const;

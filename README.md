@@ -1156,6 +1156,7 @@ For complete architectural patterns, threat models, and an incident response che
 - [Pagination Helpers](./docs/pagination.md) - Cursor- and offset-based pagination for payroll history and audit records
 - [Audit Grant Scope Reader](./docs/audit-grant-scope.md) - Effective audit scope and lifecycle state for an auditor's grants
 - [Payroll UX Helpers](./docs/payroll-ux-helpers.md) - Configurable logging, completion polling, run summaries, and command serialization
+- [Cache Invalidation Helpers](./docs/CACHE_INVALIDATION.md) - Predictable event-driven and manual cache invalidation, key management, and staleness detection
 - [ZK Proof Generation](./docs/ZK_PROOF_GENERATION.md) - Detailed proof generation guide
 - [Examples](./examples/README.md) - Runnable examples and setup steps
 

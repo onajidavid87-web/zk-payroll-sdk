@@ -11,4 +11,8 @@ export interface CacheProvider<T = string> {
   set(key: string, value: T, ttlSeconds?: number): Promise<void>;
   /** Returns true if key exists in the cache. */
   has(key: string): Promise<boolean>;
+  /** Deletes a cached entry by key. */
+  del?(key: string): Promise<void>;
+  /** Clears all entries from the cache. */
+  clear?(): Promise<void>;
 }

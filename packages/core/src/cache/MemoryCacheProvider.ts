@@ -72,4 +72,20 @@ export class MemoryCacheProvider<T = string> implements MetadataCacheProvider<T>
   async has(key: string): Promise<boolean> {
     return (await this.get(key)) !== null;
   }
+
+  async del(key: string): Promise<void> {
+    try {
+      this.store.delete(key);
+    } catch (err) {
+      throw new PayrollError(`MemoryCacheProvider.del failed: ${err}`, 505);
+    }
+  }
+
+  async clear(): Promise<void> {
+    try {
+      this.store.clear();
+    } catch (err) {
+      throw new PayrollError(`MemoryCacheProvider.clear failed: ${err}`, 506);
+    }
+  }
 }

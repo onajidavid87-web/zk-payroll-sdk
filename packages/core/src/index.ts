@@ -38,7 +38,6 @@ export {
   RpcTimeoutError,
   InvalidResponseError,
   ValidationError,
-  NetworkFallbackError,
   ContractErrorCode,
   WalletError,
   WalletRejectionError,
@@ -65,7 +64,6 @@ export type {
   ErrorMessageOverrides,
   ErrorCategoryType,
   ErrorCodeEntry,
-  NetworkFallbackErrorCodeType,
 } from "./errors";
 export type {
   ClientConfig,
@@ -276,3 +274,7 @@ export * from "./treasury/balanceBufferEnforcement";
 
 // ── Emergency Payroll Pause Authorization (#692) ───────────────────────────
 export * from "./pause/emergencyPauseAuthorization";
+
+// ── SDK Payroll Cache Invalidation Helpers ─────────────────────────────────
+export * from "./events/invalidationBridge";
+export * from "./payroll/cacheInvalidator";
